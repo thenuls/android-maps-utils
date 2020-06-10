@@ -18,7 +18,9 @@ package com.google.maps.android.utils.demo;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
@@ -34,6 +36,7 @@ import com.google.maps.android.collections.PolygonManager;
 import com.google.maps.android.collections.PolylineManager;
 import com.google.maps.android.data.Feature;
 import com.google.maps.android.data.Renderer;
+import com.google.maps.android.data.geojson.GeoJsonLayer;
 import com.google.maps.android.data.kml.KmlContainer;
 import com.google.maps.android.data.kml.KmlLayer;
 import com.google.maps.android.data.kml.KmlPlacemark;
@@ -60,15 +63,19 @@ public class KmlDemoActivity extends BaseDemoActivity {
         mIsRestore = isRestore;
         try {
             mMap = getMap();
-            //retrieveFileFromResource();
-            retrieveFileFromUrl();
+            retrieveFileFromResource();
+//            retrieveFileFromUrl();
         } catch (Exception e) {
             Log.e("Exception caught", e.toString());
         }
+        findViewById(R.id.buttonClear).setOnClickListener(v -> {
+            mMap.clear();
+            new Handler().postDelayed((Runnable) this::retrieveFileFromResource, 1000);
+        });
     }
 
     private void retrieveFileFromResource() {
-        new LoadLocalKmlFile(R.raw.campus).execute();
+        new LoadLocalKmlFile(R.raw.mykmz).execute();
     }
 
     private void retrieveFileFromUrl() {
@@ -81,7 +88,7 @@ public class KmlDemoActivity extends BaseDemoActivity {
             //Retrieve the first container in the KML layer
             KmlContainer container = kmlLayer.getContainers().iterator().next();
             //Retrieve a nested container within the first container
-            container = container.getContainers().iterator().next();
+//            container = container.getContainers().iterator().next();
             //Retrieve the first placemark in the nested container
             KmlPlacemark placemark = container.getPlacemarks().iterator().next();
             //Retrieve a polygon object in a placemark
@@ -198,9 +205,12 @@ public class KmlDemoActivity extends BaseDemoActivity {
     private void addKmlToMap(KmlLayer kmlLayer) {
         if (kmlLayer != null) {
             kmlLayer.addLayerToMap();
-            kmlLayer.setOnFeatureClickListener(feature -> Toast.makeText(KmlDemoActivity.this,
-                    "Feature clicked: " + feature.getId(),
-                    Toast.LENGTH_SHORT).show());
+            kmlLayer.setOnFeatureClickListener(feature -> {
+                final String properties = feature.getClass().getSimpleName() + " " + feature.getId() + " " + (feature.hasProperties() ? "Has properties" : "Doesn't have properties.");
+                Toast.makeText(KmlDemoActivity.this,
+                        properties,
+                        Toast.LENGTH_SHORT).show();
+            });
             moveCameraToKml(kmlLayer);
         }
     }
